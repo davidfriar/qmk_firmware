@@ -15,13 +15,13 @@ extern uint8_t is_master;
 #define _QWERTY 0
 #define _LOWER 1
 #define _RAISE 2
-#define _ADJUST 3
+#define _SETTINGS 3
 
 enum custom_keycodes {
   QWERTY = SAFE_RANGE,
   LOWER,
   RAISE,
-  ADJUST,
+  SETTINGS,
   RGBRST
 };
 
@@ -75,7 +75,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                                       //`--------------------------'  `--------------------------'
   ),
 
-  [_ADJUST] = LAYOUT( \
+  [_SETTINGS] = LAYOUT( \
   //,-----------------------------------------------------.                    ,-----------------------------------------------------.
         RESET,  RGBRST, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,                      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,\
   //|--------+--------+--------+--------+--------+--------|                    |--------+--------+--------+--------+--------+--------|
@@ -95,7 +95,7 @@ void persistent_default_layer_set(uint16_t default_layer) {
   default_layer_set(default_layer);
 }
 
-// Setting ADJUST layer RGB back to default
+// Setting SETTINGS layer RGB back to default
 void update_tri_layer_RGB(uint8_t layer1, uint8_t layer2, uint8_t layer3) {
   if (IS_LAYER_ON(layer1) && IS_LAYER_ON(layer2)) {
     layer_on(layer3);
@@ -118,14 +118,19 @@ void matrix_init_user(void) {
 #ifdef SSD1306OLED
 
 // When add source files to SRC in rules.mk, you can use functions.
-const char *read_layer_state(void);
+/* const char *read_layer_state(void); */
 const char *read_logo(void);
+const char *read_num(void);
+const char *read_sym(void);
+const char *read_settings(void);
+const char *read_querty(void);
+const char *read_rgb_info(void);
 void set_keylog(uint16_t keycode, keyrecord_t *record);
-const char *read_keylog(void);
-const char *read_keylogs(void);
+/* const char *read_keylog(void); */
+/* const char *read_keylogs(void); */
 
 // const char *read_mode_icon(bool swap);
-// const char *read_host_led_state(void);
+ const char *read_host_led_state(void);
 // void set_timelog(void);
 // const char *read_timelog(void);
 
@@ -135,9 +140,28 @@ void matrix_scan_user(void) {
 
 void matrix_render_user(struct CharacterMatrix *matrix) {
   if (is_master) {
+    switch (layer_state) {
+      case 0:
+        matrix_write(matrix, read_querty());
+        break;
+      case 2:
+        matrix_write(matrix, read_num());
+        break;
+      case 4:
+        matrix_write(matrix, read_sym());
+        break;
+      case 8:
+      case 14:
+        matrix_write(matrix, read_settings());
+        break;
+      default:
+        matrix_write(matrix, "undefined layer" );
+    }
     // If you want to change the display of OLED, you need to change here
-    matrix_write_ln(matrix, read_layer_state());
-    matrix_write_ln(matrix, read_keylog());
+      /* matrix_write(matrix,read_sym()); */
+    /* matrix_write_ln(matrix, read_layer_state()); */
+    /* matrix_write_ln(matrix, read_keylog()); */
+
     //matrix_write_ln(matrix, read_keylogs());
     //matrix_write_ln(matrix, read_mode_icon(keymap_config.swap_lalt_lgui));
     //matrix_write_ln(matrix, read_host_led_state());
@@ -179,26 +203,26 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     case LOWER:
       if (record->event.pressed) {
         layer_on(_LOWER);
-        update_tri_layer_RGB(_LOWER, _RAISE, _ADJUST);
+        update_tri_layer_RGB(_LOWER, _RAISE, _SETTINGS);
       } else {
         layer_off(_LOWER);
-        update_tri_layer_RGB(_LOWER, _RAISE, _ADJUST);
+        update_tri_layer_RGB(_LOWER, _RAISE, _SETTINGS);
       }
       return false;
     case RAISE:
       if (record->event.pressed) {
         layer_on(_RAISE);
-        update_tri_layer_RGB(_LOWER, _RAISE, _ADJUST);
+        update_tri_layer_RGB(_LOWER, _RAISE, _SETTINGS);
       } else {
         layer_off(_RAISE);
-        update_tri_layer_RGB(_LOWER, _RAISE, _ADJUST);
+        update_tri_layer_RGB(_LOWER, _RAISE, _SETTINGS);
       }
       return false;
-    case ADJUST:
+    case SETTINGS:
         if (record->event.pressed) {
-          layer_on(_ADJUST);
+          layer_on(_SETTINGS);
         } else {
-          layer_off(_ADJUST);
+          layer_off(_SETTINGS);
         }
         return false;
     case RGB_MOD:
